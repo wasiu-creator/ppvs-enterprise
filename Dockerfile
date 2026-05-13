@@ -1,5 +1,5 @@
 # ── PPVS — Privacy-Preserving Voting System ──────────────────────────────────
-# Nexus Global · Enterprise Edition
+# Global Enterprise
 # Node 20 on Alpine Linux (small, fast image)
 # ─────────────────────────────────────────────────────────────────────────────
 FROM node:20-alpine
