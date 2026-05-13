@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  ppvs:
+    build: .
+    container_name: ppvs-enterprise
+    ports:
+      - "3000:3000"   # Web frontend — open http://localhost:3000 in your browser
+      - "8545:8545"   # Blockchain RPC — ethers.js connects here automatically
+    restart: unless-stopped

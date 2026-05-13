@@ -1,0 +1,9 @@
+node_modules/
+artifacts/
+cache/
+deployment.json
+vote.sym
+.env
+*.pptx
+*.code-workspace
+.claude/

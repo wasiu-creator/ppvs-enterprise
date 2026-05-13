@@ -1,0 +1,652 @@
+═════════════════════════════════════════════════════════════════
+   🗳  PRIVACY-PRESERVING VOTING SYSTEM (PPVS)
+      Nexus Global — Workforce Preference Survey
+      Enterprise Edition · Zero-Knowledge Proofs (ZKP)
+═════════════════════════════════════════════════════════════════
+
+  Organisation: Nexus Global Enterprises
+  Network:      Hardhat Local (Simulated Corporate Blockchain)
+  Admin:        0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+
+  Security Policy:
+  Under Nexus Global's Tier-1 Security Protocol, all workforce
+  surveys must be cryptographically anonymous. No manager, HR
+  officer, or system admin may link a response to an individual
+  employee. PPVS enforces this guarantee at the protocol level.
+
+━━ Step 1: Deploy PPVS Survey Contract
+  ✅ MockZKVoting deployed at 0x610178dA211FEF7D417bC0e6FeD39F05609AD788
+  ℹ  Survey: "Nexus Global — Workforce Preference Survey 2026"
+  ℹ  Options: [0] In-Person  [1] Remote  [2] Hybrid
+
+━━ Step 2: Employees Generate Cryptographic Identities (off-chain)
+  ℹ  Each employee runs this locally — secrets stay on their device:
+  ────────────────────────────────────────────────────────────
+
+  Emma (London, UK):
+    secret:          2099057629...305751  (PRIVATE — never shared)
+    nullifierSecret:  6601844086...360040  (PRIVATE — never shared)
+    commitment:       2809320539...124751  (PUBLIC — enrolled on-chain)
+    nullifier:        3890189887...242422  (PUBLIC — revealed when voting)
+
+  Raj (Mumbai, India):
+    commitment:       1691172057...191303
+    nullifier:        1210230297...067894
+
+  Sofia (São Paulo, Brazil):
+    commitment:       1419151960...557452
+    nullifier:        3067640885...999903
+
+━━ Step 3: HR Admin Registers Employee Commitments On-Chain
+  ℹ  HR only sees cryptographic commitments — no names, no locations
+  ────────────────────────────────────────────────────────────
+  ✅ Emma, Raj, and Sofia enrolled on-chain
+
+━━ Step 4: HR Admin Opens the Survey
+  ✅ Survey is now OPEN — employees may submit their preference globally
+
+━━ Step 5: Employees Submit Private Preferences via ZK Proofs
+  ────────────────────────────────────────────────────────────
+  ℹ  Emma (London) generating ZK proof for her preference (In-Person)...
+  ℹ    ZK circuit proves: Emma knows the preimage of her enrolled commitment
+  ℹ    ZK circuit proves: Her nullifier is fresh (first submission)
+  ℹ    ZK circuit proves: Option 0 (In-Person) is valid (in [0, 3))
+  ℹ    → None of this reveals: WHO Emma is or WHICH option she chose
+  ✅ Emma's preference accepted! Nullifier recorded, In-Person +1
+  ℹ
+  Raj (Mumbai) submits preference: Remote...
+  ✅ Raj's preference accepted! Nullifier recorded, Remote +1
+  ℹ
+  Sofia (São Paulo) submits preference: Remote...
+  ✅ Sofia's preference accepted! Nullifier recorded, Remote +1
+
+━━ Step 6: Security Test 1 — Emma Attempts to Change Her Response
+  ────────────────────────────────────────────────────────────
+  ℹ  Emma attempts a second submission (same nullifier)...
+  ✅ Double-submission REJECTED: "double-vote detected"
+  ℹ  Nullifier already on-chain — blockchain prevents replay attacks
+
+━━ Step 7: Security Test 2 — External Intruder Injects a Fake Response
+  ────────────────────────────────────────────────────────────
+  ℹ  Intruder (not enrolled by HR) attempts to submit a vote...
+  ✅ Intruder REJECTED: "commitment not registered"
+  ℹ  Commitment not in HR registry → proof rejected at contract level
+
+━━ Step 8: Security Test 3 — Submission of an Invalid Work-Model Option
+  ────────────────────────────────────────────────────────────
+  ℹ  Attacker attempts to submit option 99 (not a valid work model)...
+  ✅ Invalid option REJECTED: "invalid candidate"
+  ℹ  On-chain range check enforces only options 0–2 are accepted
+
+━━ Step 9: HR Admin Closes the Survey
+  ✅ Survey is now CLOSED — no further submissions accepted
+
+━━ Step 10: Public Tally — Results Are Fully Transparent
+  ────────────────────────────────────────────────────────────
+
+  📊 Survey Results — Nexus Global Workforce Preference 2026
+  ──────────────────────────────────────────────────────────
+  [0] In-Person        █████           1 votes (33.3%)
+  [1] Remote           ██████████      2 votes (66.7%) ⬅ TOP PREFERENCE
+  [2] Hybrid                           0 votes (0.0%)
+  ──────────────────────────────────────────────────────────
+  Total responses: 3
+
+  🔐 Security Guarantees Demonstrated (Nexus Tier-1 Protocol):
+  ✓ Employee secrets (secret, nullifierSecret) never left their device
+  ✓ The blockchain only stores cryptographic commitments and nullifiers
+  ✓ No on-chain mapping exists from nullifier → employee identity
+  ✓ Double-submission prevented by nullifier uniqueness
+  ✓ ZK proof ensures only enrolled employees can respond
+  ✓ HR and management cannot determine individual response choices
+  ✓ Results are publicly verifiable and tamper-proof
+
+═════════════════════════════════════════════════════════════════
+  Survey complete! All PPVS security properties demonstrated.
+═════════════════════════════════════════════════════════════════
+
+#################################################################
+TERMINAL #1
+#################################################################
+
+PS C:\Users\wsany\Downloads\sawasiu.com\Wasiu\BSU\S11\COSC 896\voting_project> # Terminal 1 — start local blockchain
+>> npx hardhat node
+>> 
+>> # Terminal 2 — deploy
+>> npx hardhat run scripts/deploy.js --network localhost
+>> 
+>> # Terminal 3 — full demo
+>> npx hardhat run scripts/demo.js --network localhost
+Started HTTP and WebSocket JSON-RPC server at http://127.0.0.1:8545/
+
+Accounts
+========
+
+WARNING: These accounts, and their private keys, are publicly known.
+Any funds sent to them on Mainnet or any other live network WILL BE LOST.
+
+Account #0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (10000 ETH)
+Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+Account #1: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (10000 ETH)
+Private Key: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+
+Account #2: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC (10000 ETH)
+Private Key: 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
+
+Account #3: 0x90F79bf6EB2c4f870365E785982E1f101E93b906 (10000 ETH)
+Private Key: 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6
+
+Account #4: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65 (10000 ETH)
+Private Key: 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a
+
+Account #5: 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc (10000 ETH)
+Private Key: 0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba
+
+Account #6: 0x976EA74026E726554dB657fA54763abd0C3a0aa9 (10000 ETH)
+Private Key: 0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e
+
+Account #7: 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 (10000 ETH)
+Private Key: 0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356
+
+Account #8: 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f (10000 ETH)
+Private Key: 0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97
+
+Account #9: 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 (10000 ETH)
+Private Key: 0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
+
+Account #10: 0xBcd4042DE499D14e55001CcbB24a551F3b954096 (10000 ETH)
+Private Key: 0xf214f2b2cd398c806f84e317254e0f0b801d0643303237d97a22a48e01628897
+
+Account #11: 0x71bE63f3384f5fb98995898A86B02Fb2426c5788 (10000 ETH)
+Private Key: 0x701b615bbdfb9de65240bc28bd21bbc0d996645a3dd57e7b12bc2bdf6f192c82
+
+Account #12: 0xFABB0ac9d68B0B445fB7357272Ff202C5651694a (10000 ETH)
+Private Key: 0xa267530f49f8280200edf313ee7af6b827f2a8bce2897751d06a843f644967b1
+
+Account #13: 0x1CBd3b2770909D4e10f157cABC84C7264073C9Ec (10000 ETH)
+Private Key: 0x47c99abed3324a2707c28affff1267e45918ec8c3f20b8aa892e8b065d2942dd
+
+Account #14: 0xdF3e18d64BC6A983f673Ab319CCaE4f1a57C7097 (10000 ETH)
+Private Key: 0xc526ee95bf44d8fc405a158bb884d9d1238d99f0612e9f33d006bb0789009aaa
+
+Account #15: 0xcd3B766CCDd6AE721141F452C550Ca635964ce71 (10000 ETH)
+Private Key: 0x8166f546bab6da521a8369cab06c5d2b9e46670292d85c875ee9ec20e84ffb61
+
+Account #16: 0x2546BcD3c84621e976D8185a91A922aE77ECEc30 (10000 ETH)
+Private Key: 0xea6c44ac03bff858b476bba40716402b03e41b8e97e276d1baec7c37d42484a0
+
+Account #17: 0xbDA5747bFD65F08deb54cb465eB87D40e51B197E (10000 ETH)
+Private Key: 0x689af8efa8c651a91ad287602527f3af2fe9f6501a7ac4b061667b5a93e037fd
+
+Account #18: 0xdD2FD4581271e230360230F9337D5c0430Bf44C0 (10000 ETH)
+Private Key: 0xde9be858da4a475276426320d5e9262ecfc3ba460bfac56360bfa6c4c28b4ee0
+
+Account #19: 0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199 (10000 ETH)
+Private Key: 0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e
+
+WARNING: These accounts, and their private keys, are publicly known.
+Any funds sent to them on Mainnet or any other live network WILL BE LOST.
+
+eth_accounts
+hardhat_metadata (20)
+eth_accounts
+hardhat_metadata (20)
+eth_blockNumber
+eth_getBlockByNumber
+eth_feeHistory
+eth_maxPriorityFeePerGas
+eth_sendTransaction
+  Contract deployment: MockZKVoting
+  Contract address:    0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Transaction:         0x0a759cfc0ea6639ffb8b4b50f25a9763e3130be8d03465e055836481ce14e561
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  Value:               0 ETH
+  Gas used:            786053 of 16777216
+  Block #1:            0x92eca6973a514e12801d34a256b6ed125d0f9884bd99301dbd7d34cbd6610943
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#registerVotersBatch
+  Transaction:         0xa67bb59d7ccfc8a8a9fd42e015f9a506eeefb60d044169103f9ac0eaad3a211b
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            96886 of 16777216
+  Block #2:            0x950ca0d3c52e9a32aba5a786c76a2c2f142a9c678ef7415bf8847c1c8eceedcd
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#startVoting
+  Transaction:         0xba225fc35d3136cc07692da5e2e041263a717c763e24d511c9a25f79e9e22325
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            46412 of 16777216
+  Block #3:            0x4e7e4e2bca60953786d46b072ce4ceb2183d5a8e79ffb78102ba9feaf1217408
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0xe6102b17cc066da77ac31c4c5fb896b7e8ccff5d908f9b9ee2462bdf2c4d6a27
+  From:                0x70997970c51812dc3a010c7d01b50e0d17dc79c8
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            101726 of 16777216
+  Block #4:            0xd718f788042216bc22875df55de7cc7730978c12695af84f30110b672d73e308
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x2efcfced01dc5e177e890a8e688af150d59f40e65ee9df8fdb465bea90ca6752
+  From:                0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            84638 of 16777216
+  Block #5:            0x01546d3b21c8371d3f4177d89b15014b6e359105a8529766232789ce4f08d8c6
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0xb4d90cff96fca96fb3073243ad36da65b9fcbc1bfa6bcfe474fc58ffcd634c87
+  From:                0x90f79bf6eb2c4f870365e785982e1f101e93b906
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            67538 of 16777216
+  Block #6:            0x4a3ba720c34466f5e1f9244f61e6c12c211c162b4fed40e52e38fe312a06afb7
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x7ff9d26ffa6f12d6620210ace12073bfb40e2d716907a16b120aa8ff7995eb1e
+  From:                0x70997970c51812dc3a010c7d01b50e0d17dc79c8
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            33940 of 16777216
+  Block #7:            0x600dd881e7ab6c2e7821c2117810d95c1bcb99acb467f66070b3f52bc447543a
+
+  Error: reverted with reason string 'double-vote detected'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x4c9ff3547c684d720f2ab860f52cb4f528d8760b3b2fa472a0b5f5a3c3b352bf
+  From:                0x15d34aaf54267db7d7c367839aaf71a00a2c6a65
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            33910 of 16777216
+  Block #8:            0xde4fbb0980e232a3b2616ef8662c2a8914b8333a45807551ba4207c8ef915382
+
+  Error: reverted with reason string 'commitment not registered'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#registerVoter
+  Transaction:         0x365b1ae9c05cfb3e78c314f90fc7dde5e971f3c12f1b7ffab3bacfa9fc62da25
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            47531 of 16777216
+  Block #9:            0x481645f05b0aa5ff012042af101f18a8eb5e08a41ab09d995318517a4f486c76
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0xa9a5595330a5ae6f1677edf93447fe9138246d67a266a54d87a7d0a28dd72633
+  From:                0x15d34aaf54267db7d7c367839aaf71a00a2c6a65
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            35623 of 16777216
+  Block #10:           0xf29a1dec44a710a495ac831834c7f858f08aff49cf88f57c2bac9a8ed9ad6c04
+
+  Error: reverted with reason string 'invalid candidate'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#endVoting
+  Transaction:         0x37d126dbb0b5b9e181fb3b45e2bfc5fca1f6bcd8a73395d6472bf314068b1a9f
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+  Value:               0 ETH
+  Gas used:            24501 of 16777216
+  Block #11:           0x05621f3188292b6f84065b8a4dba084af67e2b1c41e312f98014ae8e847c3407
+
+eth_getTransactionByHash
+eth_call
+  Contract call:       MockZKVoting#getResults
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+
+eth_call
+  Contract call:       MockZKVoting#totalVotes
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fbdb2315678afecb367f032d93f642f64180aa3
+
+eth_accounts
+hardhat_metadata (20)
+eth_accounts
+hardhat_metadata (20)
+eth_blockNumber
+eth_getBlockByNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract deployment: MockZKVoting
+  Contract address:    0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Transaction:         0x5062928e5d3a9da2612fd562ab02bd25778a6b5a416cc9d0213a8a873f853818
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  Value:               0 ETH
+  Gas used:            786053 of 16777216
+  Block #12:           0x0a7f20984c3fe97d1922e52a10a71aea71a73f4d0b01e2b9b5208fdd47a161e9
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#registerVotersBatch
+  Transaction:         0xf04fe3a8cc4b6cd09f55a29223833e39afe74fe9c6c36105743db8b6ea4f4fac
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            96874 of 16777216
+  Block #13:           0x231cf009304fef2c6752ec2b65896e255c5d66011cf619c6ac518358178de9cc
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#startVoting
+  Transaction:         0xbf4ea45c20a81a3a4ac1bd8df0328c282ebe2596bc27347de2de40cc65ee8423
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            46412 of 16777216
+  Block #14:           0x506578e4b3778f0dd3e70c8609d2cfc1489d5cca696ac5887aba3154f3be9b2f
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x8caff102a431f0c6c0bc807573162e93f3e90b4a283ee041dbdca43e11e2480b
+  From:                0x70997970c51812dc3a010c7d01b50e0d17dc79c8
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            101726 of 16777216
+  Block #15:           0xea96e005eb0d8bf8f99f2f41f346c587546f86df1c0e0ee979d473c2be2aa394
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x6e7e2d6bd4e88fecbbd6ba201348a9e8aa404eb2105de0712a8aad6e3b141dd5
+  From:                0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            84638 of 16777216
+  Block #16:           0x29f4b520d6845eb3ec1040b6a53d3c4e5c501b52872243ac12d3f941f5dd3394
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0xc088e67753d7d12541d9c9686ec102b2838a2159077aa91ad82b82742ac94964
+  From:                0x90f79bf6eb2c4f870365e785982e1f101e93b906
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            67526 of 16777216
+  Block #17:           0xe16488f38195e0ab8ffc89df7e41ae6ffe4801e53f6a0db22e699cfed1b8a56f
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x57cf6e0e15cf089ad1b7cbf533ed7a0f08ebf940dd1d9ffcff340ad6c0812c4d
+  From:                0x70997970c51812dc3a010c7d01b50e0d17dc79c8
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            33940 of 16777216
+  Block #18:           0x31a25f9f081161144c5c98b98c6d6b1e4c47fffc41eb992eda0fc3f427d9237c
+
+  Error: reverted with reason string 'double-vote detected'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0xaab46643337c384e83926cde52f4de832467e0fce0c5c99e8b969cd6c716d0d8
+  From:                0x15d34aaf54267db7d7c367839aaf71a00a2c6a65
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            33910 of 16777216
+  Block #19:           0x237616c9cd2f6f7537f27cc8b141702870a811a3466b9c324f02c2abf99e0591
+
+  Error: reverted with reason string 'commitment not registered'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#registerVoter
+  Transaction:         0x8cff6f85eb8709db66979c5e1472114dcd7b58eb8da122b2ac6c40e374b9d376
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            47531 of 16777216
+  Block #20:           0x4f42c232a9a247cbadeb9720f8060935669949ff0184ea7cdf37edfd8632f5e3
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0xf6b4e9633767b532ed373928bd904425e96865bdb5ce4ff4e11dc4abecb00b65
+  From:                0x15d34aaf54267db7d7c367839aaf71a00a2c6a65
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            35623 of 16777216
+  Block #21:           0x07b35a36e247597d10ef23ec34f5c7431fbc2e472ea1940c24757d149ed3025a
+
+  Error: reverted with reason string 'invalid candidate'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#endVoting
+  Transaction:         0x9e8ec261e7c523ee9e1499992aca2499705ab6faf04019c3208f50241163ee54
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+  Value:               0 ETH
+  Gas used:            24501 of 16777216
+  Block #22:           0x4bef7ebb4a1084f066941ea521ba4f4634112b08f067514fcc6862048371236c
+
+eth_getTransactionByHash
+eth_call
+  Contract call:       MockZKVoting#getResults
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+
+eth_call
+  Contract call:       MockZKVoting#totalVotes
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+
+eth_accounts
+hardhat_metadata (20)
+eth_accounts
+hardhat_metadata (20)
+eth_blockNumber
+eth_getBlockByNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract deployment: MockZKVoting
+  Contract address:    0x610178da211fef7d417bc0e6fed39f05609ad788
+  Transaction:         0xebad28d2ea2a545741c3dc2e9999974e97172c9c68be03da89a5f6e78861fb4f
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  Value:               0 ETH
+  Gas used:            786053 of 16777216
+  Block #23:           0xe5d9134d566c48de7d84a6caa932dbcc991a15cd4ccbe2442fe983184274e0aa
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#registerVotersBatch
+  Transaction:         0x7d6ea60698f5587a408e1751defd469aae175669929591c4aee9e5a19710fb6d
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            96874 of 16777216
+  Block #24:           0x9a2fc306bbbc7157ea8649c05b16acb04d3b618ee312565d37e97f5bd33e5154
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#startVoting
+  Transaction:         0xbc68b74af1c2acc430ad2097d4c1527f2bc95da1e677bad01e546f626693d4b8
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            46412 of 16777216
+  Block #25:           0x32fd94376f9e690ab51bb8c8bb2af051560b0f0bd9c281973bbc121b688b2737
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x5a1fe5ad5ec6ff6a776b9c86aace451841ce027da1f99ee92fd5099dae671b26
+  From:                0x70997970c51812dc3a010c7d01b50e0d17dc79c8
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            101726 of 16777216
+  Block #26:           0x963a79b66191afe49957a47476904fabc4b8350b8e00faf8d98e15affb720058
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0xd1539f9e5986c03e731246b1704c5effb8c5f33a4c3c71c49b9fd3b5e4a58af8
+  From:                0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            84626 of 16777216
+  Block #27:           0xcb14583a2152493e3c3a41d5b226db55711fc22b7961304f095e8394613fcc47
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x3f2fea99e6807d2a3d59d1efc3c157b4af568f176a9e806fa332819811588a31
+  From:                0x90f79bf6eb2c4f870365e785982e1f101e93b906
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            67538 of 16777216
+  Block #28:           0x5594a319c06c6f26573cc1da484a7fd71fc707ed1564023076492f4fa07dd676
+
+eth_getTransactionByHash
+eth_getTransactionReceipt
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0xdc0182ce5d5a5ca2b1edb334272cf6d30bd09801edf70fc8b1da6980fde113f7
+  From:                0x70997970c51812dc3a010c7d01b50e0d17dc79c8
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            33940 of 16777216
+  Block #29:           0x0d78305e7401329ebbf91d3ad8cb4572fae0601eea7d49657c0383997aeb8fe7
+
+  Error: reverted with reason string 'double-vote detected'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x6fbd3a61c839768e3d8e3e11d8c6a3458b23c01bd08fe265160084ee8e4b03e4
+  From:                0x15d34aaf54267db7d7c367839aaf71a00a2c6a65
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            33910 of 16777216
+  Block #30:           0xfaf26f5b8a3ae61784ffea3364f82b33f19d69b2d7099a7bcc0c4bebe742b38a
+
+  Error: reverted with reason string 'commitment not registered'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#registerVoter
+  Transaction:         0x58465f1b1ea182d824a7500db6b41d4af0c96c63fb2d52ea7d9545cc4ba5a76e
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            47519 of 16777216
+  Block #31:           0x9b1ee6548f3de59cc3394813bf130d7273bd416a0e5d769b9e51cfca3169dab5
+
+eth_getTransactionByHash
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#castVote
+  Transaction:         0x5b63bff08fea25a71fa118520716542729df20cbec1f2d28ad211e4adc21960d
+  From:                0x15d34aaf54267db7d7c367839aaf71a00a2c6a65
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            35611 of 16777216
+  Block #32:           0xa76d8c936a0b3939eed538e88bc58ccf22ca480f6ebc5b6feadedf70cf4bb6f9
+
+  Error: reverted with reason string 'invalid candidate'
+
+eth_blockNumber
+eth_feeHistory
+eth_sendTransaction
+  Contract call:       MockZKVoting#endVoting
+  Transaction:         0x2f72dfbb7ebac57fc0eaf8044fec4cf3a6bed52cb2322bcd140f5aaa544586aa
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+  Value:               0 ETH
+  Gas used:            24501 of 16777216
+  Block #33:           0x06970212c8e73071467f5a4e2e866ace13f53e9547fac02c4484923c22c356ee
+
+eth_getTransactionByHash
+eth_call
+  Contract call:       MockZKVoting#getResults
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788
+
+eth_call
+  Contract call:       MockZKVoting#totalVotes
+  From:                0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
+  To:                  0x610178da211fef7d417bc0e6fed39f05609ad788

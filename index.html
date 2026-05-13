@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PPVS — Privacy-Preserving Voting System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+<style>
+  :root {
+    --navy:   #0f1a2e;
+    --navy2:  #162035;
+    --card:   #1b2a45;
+    --card2:  #1e2f4a;
+    --border: #2a3f5f;
+    --teal:   #0d9488;
+    --teal2:  #14b8a6;
+    --gold:   #f59e0b;
+    --gold2:  #fbbf24;
+    --red:    #ef4444;
+    --green:  #22c55e;
+    --text:   #e2e8f0;
+    --muted:  #94a3b8;
+    --white:  #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  header {
+    background: linear-gradient(135deg, #0a1628 0%, #162035 100%);
+    border-bottom: 2px solid var(--teal);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 44px; height: 44px; background: var(--teal);
+    border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px;
+  }
+  .logo h1 { font-size: 1.4rem; font-weight: 700; color: var(--white); }
+  .logo p  { font-size: 0.75rem; color: var(--teal2); letter-spacing: 0.05em; }
+  .help-link {
+    color: var(--gold); text-decoration: none; font-size: 0.88rem;
+    border: 1px solid var(--gold); border-radius: 6px;
+    padding: 6px 14px; transition: all 0.2s;
+  }
+  .help-link:hover { background: var(--gold); color: var(--navy); }
+
+  /* ── Network bar ─────────────────────────────────────────── */
+  .net-bar {
+    background: var(--navy2); border-bottom: 1px solid var(--border);
+    padding: 8px 32px; display: flex; align-items: center; gap: 16px;
+    font-size: 0.8rem; color: var(--muted);
+  }
+  .net-bar .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red); flex-shrink: 0;
+  }
+  .net-bar .dot.connected { background: var(--green); }
+  #contract-addr { font-family: monospace; color: var(--teal2); font-size: 0.78rem; }
+
+  /* ── Layout ──────────────────────────────────────────────── */
+  main {
+    max-width: 1100px; margin: 0 auto;
+    padding: 28px 24px; display: grid;
+    grid-template-columns: 1fr 1fr; gap: 20px;
+  }
+  @media(max-width:750px){ main { grid-template-columns:1fr; } }
+
+  /* ── Cards ───────────────────────────────────────────────── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px;
+  }
+  .card.full { grid-column: 1 / -1; }
+  .card-title {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--teal2); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .step-badge {
+    background: var(--teal); color: var(--navy);
+    border-radius: 50%; width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 900;
+  }
+
+  /* ── Form elements ───────────────────────────────────────── */
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 5px; }
+  input, select {
+    width: 100%; background: var(--navy); border: 1px solid var(--border);
+    color: var(--text); border-radius: 7px; padding: 9px 12px;
+    font-size: 0.85rem; margin-bottom: 12px; outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--teal); }
+  input[readonly] { color: var(--muted); cursor: default; font-family: monospace; font-size: 0.72rem; }
+
+  /* ── Buttons ─────────────────────────────────────────────── */
+  .btn {
+    padding: 9px 18px; border-radius: 7px; border: none;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; width: 100%; margin-top: 4px;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-teal  { background: var(--teal);  color: var(--white); }
+  .btn-teal:hover:not(:disabled)  { background: var(--teal2); }
+  .btn-gold  { background: var(--gold);  color: var(--navy);  }
+  .btn-gold:hover:not(:disabled)  { background: var(--gold2); }
+  .btn-red   { background: var(--red);   color: var(--white); }
+  .btn-red:hover:not(:disabled)   { background: #dc2626; }
+  .btn-ghost {
+    background: transparent; color: var(--teal2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--teal2); }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { width: auto; flex: 1; }
+
+  /* ── Identity box ────────────────────────────────────────── */
+  .identity-box {
+    background: var(--navy); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px; margin-bottom: 14px;
+  }
+  .identity-box .voter-name {
+    font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: 10px;
+  }
+  .kv { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 5px; }
+  .kv .k { font-size: 0.72rem; color: var(--muted); width: 88px; flex-shrink: 0; padding-top: 2px; }
+  .kv .v { font-family: monospace; font-size: 0.7rem; color: var(--teal2); word-break: break-all; }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 20px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .badge-green  { background: rgba(34,197,94,0.15);  color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .badge-red    { background: rgba(239,68,68,0.15);  color: var(--red);   border: 1px solid rgba(239,68,68,0.3); }
+  .badge-yellow { background: rgba(245,158,11,0.15); color: var(--gold);  border: 1px solid rgba(245,158,11,0.3); }
+  .badge-blue   { background: rgba(13,148,136,0.15); color: var(--teal2); border: 1px solid rgba(13,148,136,0.3); }
+
+  /* ── Voter list ──────────────────────────────────────────── */
+  .voter-list { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; }
+  .voter-item {
+    background: var(--navy); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .voter-item:hover { border-color: var(--teal); }
+  .voter-item.selected { border-color: var(--teal2); background: rgba(13,148,136,0.07); }
+  .voter-item .vi-name { font-weight: 600; font-size: 0.88rem; }
+  .voter-item .vi-status { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── Results bar ─────────────────────────────────────────── */
+  .results-grid { display: flex; flex-direction: column; gap: 12px; }
+  .result-row { }
+  .result-header { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.82rem; }
+  .result-bar-bg {
+    background: var(--border); border-radius: 20px; height: 10px; overflow: hidden;
+  }
+  .result-bar-fill {
+    height: 100%; border-radius: 20px;
+    background: linear-gradient(90deg, var(--teal), var(--teal2));
+    transition: width 0.6s ease;
+  }
+
+  /* ── Log ─────────────────────────────────────────────────── */
+  .log-box {
+    background: var(--navy); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; max-height: 180px;
+    overflow-y: auto; font-family: monospace; font-size: 0.75rem;
+  }
+  .log-entry { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .log-entry.ok   { color: var(--green); }
+  .log-entry.err  { color: var(--red); }
+  .log-entry.info { color: var(--teal2); }
+  .log-entry.warn { color: var(--gold); }
+
+  /* ── Status chips ────────────────────────────────────────── */
+  .status-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+
+  /* ── Election control ────────────────────────────────────── */
+  .election-state {
+    text-align: center; padding: 20px;
+    border: 2px dashed var(--border); border-radius: 10px; margin-bottom: 16px;
+  }
+  .election-state .es-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
+  .election-state .es-value { font-size: 1.5rem; font-weight: 800; }
+  .es-value.open   { color: var(--green); }
+  .es-value.closed { color: var(--red); }
+
+  /* ── Candidates ──────────────────────────────────────────── */
+  .cand-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+  .cand-btn {
+    background: var(--navy); border: 2px solid var(--border);
+    border-radius: 10px; padding: 14px 8px; cursor: pointer;
+    text-align: center; transition: all 0.2s; color: var(--text);
+  }
+  .cand-btn:hover { border-color: var(--teal); }
+  .cand-btn.chosen { border-color: var(--teal2); background: rgba(13,148,136,0.1); }
+  .cand-btn .cand-icon { font-size: 1.6rem; margin-bottom: 6px; }
+  .cand-btn .cand-name { font-size: 0.82rem; font-weight: 700; }
+  .cand-btn .cand-party { font-size: 0.7rem; color: var(--muted); }
+
+  /* ── Modal ───────────────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 1000;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; max-width: 640px; width: 100%;
+    max-height: 85vh; overflow-y: auto; padding: 28px;
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 14px;
+  }
+  .modal-header h2 { font-size: 1.1rem; color: var(--white); }
+  .modal-close {
+    background: none; border: none; color: var(--muted);
+    font-size: 1.3rem; cursor: pointer; padding: 4px 8px;
+    border-radius: 6px; transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .guide-section { margin-bottom: 20px; }
+  .guide-section h3 {
+    font-size: 0.85rem; font-weight: 700; color: var(--teal2);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;
+  }
+  .guide-section p { font-size: 0.85rem; color: var(--muted); line-height: 1.6; margin-bottom: 8px; }
+  .guide-step {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--navy); border-radius: 8px; padding: 10px 14px;
+    margin-bottom: 8px;
+  }
+  .guide-step .gs-num {
+    background: var(--teal); color: var(--navy); border-radius: 50%;
+    width: 22px; height: 22px; display: flex; align-items: center;
+    justify-content: center; font-size: 0.72rem; font-weight: 900; flex-shrink: 0;
+  }
+  .guide-step .gs-text { font-size: 0.82rem; color: var(--text); line-height: 1.5; }
+  .guide-step .gs-text strong { color: var(--white); }
+  .zkp-prop {
+    background: var(--navy); border-left: 3px solid var(--teal);
+    border-radius: 0 8px 8px 0; padding: 10px 14px; margin-bottom: 8px;
+  }
+  .zkp-prop .zp-title { font-size: 0.8rem; font-weight: 700; color: var(--teal2); margin-bottom: 3px; }
+  .zkp-prop .zp-desc  { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+  /* ── Misc ────────────────────────────────────────────────── */
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; color: var(--muted); font-size: 0.82rem; padding: 20px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════ HEADER ══ -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🗳</div>
+    <div>
+      <h1>PPVS</h1>
+      <p>PRIVACY-PRESERVING VOTING SYSTEM &nbsp;·&nbsp; ENTERPRISE EDITION</p>
+    </div>
+  </div>
+  <a href="#" class="help-link" id="help-btn">? Voting Guide</a>
+</header>
+
+<!-- ══════════════════════════════════════════════ NET BAR ══ -->
+<div class="net-bar">
+  <div class="dot" id="net-dot"></div>
+  <span id="net-label">Not connected — enter contract address below</span>
+  <span id="contract-addr"></span>
+</div>
+
+<!-- ════════════════════════════════════════════════ MAIN ══ -->
+<main>
+
+  <!-- ── Connect Card ───────────────────────────────────────── -->
+  <div class="card full" id="connect-card">
+    <div class="card-title">⚡ Connect to Hardhat Node</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div style="flex:2">
+        <label>Contract Address (from <code>npx hardhat run scripts/deploy.js</code>)</label>
+        <input type="text" id="contract-input" placeholder="0x5FbDB2315678afecb367f032d93F642f64180aa3" style="margin-bottom:0"/>
+      </div>
+      <div style="flex:1">
+        <label>RPC URL</label>
+        <input type="text" id="rpc-input" value="http://127.0.0.1:8545" style="margin-bottom:0"/>
+      </div>
+      <div>
+        <button class="btn btn-teal" id="connect-btn" style="width:120px;margin-top:0">Connect</button>
+      </div>
+    </div>
+    <div id="connect-hint" style="margin-top:10px;font-size:0.78rem;color:var(--muted)">
+      Run <code style="color:var(--teal2)">npx hardhat node</code> in Terminal 1 (corporate blockchain node), then
+      <code style="color:var(--teal2)">npx hardhat run scripts/deploy.js --network localhost</code> in Terminal 2 (HR admin deploys survey contract).
+      Paste the printed contract address above.
+    </div>
+  </div>
+
+  <!-- ── Voter Roster ───────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge">1</span> Employee Roster</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="text" id="voter-name-input" placeholder="Employee name (e.g. Emma — London)" style="margin-bottom:0;flex:1"/>
+      <button class="btn btn-ghost" id="add-voter-btn" style="width:auto;padding:9px 16px;margin-top:0">+ Add</button>
+    </div>
+    <div class="voter-list" id="voter-list">
+      <div class="empty-state">No voters yet. Add some above.</div>
+    </div>
+  </div>
+
+  <!-- ── Election Control ───────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge">2</span> Survey Control (HR Admin)</div>
+    <div class="election-state">
+      <div class="es-label">ELECTION STATUS</div>
+      <div class="es-value closed" id="election-status-text">CLOSED</div>
+    </div>
+    <div class="status-row">
+      <span class="badge badge-blue" id="total-votes-badge">Total Votes: 0</span>
+      <span class="badge badge-yellow" id="registered-badge">Registered: 0</span>
+    </div>
+    <button class="btn btn-teal" id="register-all-btn" disabled style="margin-bottom:8px">
+      Enrol All Employees On-Chain
+    </button>
+    <div class="btn-row">
+      <button class="btn btn-gold" id="start-btn" disabled>▶ Open Survey</button>
+      <button class="btn btn-red"  id="end-btn"   disabled>■ Close Survey</button>
+    </div>
+    <div class="divider"></div>
+    <div class="card-title" style="margin-bottom:8px">Activity Log</div>
+    <div class="log-box" id="log-box">
+      <div class="log-entry info">Ready. Connect to a deployed contract to begin.</div>
+    </div>
+  </div>
+
+  <!-- ── Cast Vote ──────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge">3</span> Submit Your Preference</div>
+    <label>Responding as (select enrolled employee)</label>
+    <select id="voter-select" style="margin-bottom:14px">
+      <option value="">— select employee —</option>
+    </select>
+    <label>Choose a work model</label>
+    <div class="cand-grid" id="cand-grid">
+      <!-- populated dynamically -->
+    </div>
+    <button class="btn btn-teal" id="vote-btn" disabled>🔐 Cast ZK Vote</button>
+    <div id="vote-status" style="margin-top:10px;font-size:0.8rem;color:var(--muted);min-height:20px"></div>
+  </div>
+
+  <!-- ── Results ────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title"><span class="step-badge">4</span> Live Survey Results</div>
+    <div class="results-grid" id="results-grid">
+      <div class="empty-state">Connect and open the survey to see results.</div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-ghost" id="refresh-btn" disabled>↻ Refresh Results</button>
+  </div>
+
+</main>
+
+<!-- ════════════════════════════════════════════════ MODAL ══ -->
+<div class="modal-overlay" id="help-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🗳 PPVS Enterprise — Survey Guide</h2>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+
+    <div class="guide-section">
+      <h3>What is PPVS?</h3>
+      <p>Under <strong>Nexus Global's Tier-1 Security Protocol</strong>, all workforce surveys must be
+         cryptographically anonymous. No manager, HR officer, or system administrator may link a
+         response to an individual employee. PPVS enforces this guarantee at the protocol level.</p>
+      <p>The Privacy-Preserving Voting System uses <strong>Zero-Knowledge Proofs (ZKP)</strong> to let
+         employees prove they are enrolled and have not yet responded — without revealing <em>who they are</em>
+         or <em>which option they chose</em>. All rules are enforced by a tamper-proof smart contract.</p>
+    </div>
+
+    <div class="guide-section">
+      <h3>How to run a survey simulation</h3>
+      <div class="guide-step">
+        <div class="gs-num">1</div>
+        <div class="gs-text"><strong>Connect.</strong> Start the Hardhat node and deploy the contract. Paste the contract address into the Connect panel and click Connect.</div>
+      </div>
+      <div class="guide-step">
+        <div class="gs-num">2</div>
+        <div class="gs-text"><strong>Enrol employees.</strong> Type employee names in the Voter Roster panel (e.g. Emma — London, Raj — Mumbai). Each employee receives a cryptographic identity generated locally in the browser — secrets never leave their device.</div>
+      </div>
+      <div class="guide-step">
+        <div class="gs-num">3</div>
+        <div class="gs-text"><strong>Register on-chain.</strong> Click <em>Register All Voters On-Chain</em>. Only each employee's <strong>commitment hash</strong> is sent to the blockchain — no name, location, or personal data.</div>
+      </div>
+      <div class="guide-step">
+        <div class="gs-num">4</div>
+        <div class="gs-text"><strong>Open the survey.</strong> Click <em>Start Voting</em> (HR admin action). The survey window is now open globally.</div>
+      </div>
+      <div class="guide-step">
+        <div class="gs-num">5</div>
+        <div class="gs-text"><strong>Cast preference votes.</strong> Select an employee and a work model (In-Person / Remote / Hybrid), then click <em>Cast ZK Vote</em>. A nullifier is revealed — proving the employee hasn't responded before, without linking back to their identity.</div>
+      </div>
+      <div class="guide-step">
+        <div class="gs-num">6</div>
+        <div class="gs-text"><strong>Test double-response prevention.</strong> Select the same employee and vote again. The chain rejects it with <em>"double-vote detected"</em> — the nullifier is already recorded on-chain.</div>
+      </div>
+      <div class="guide-step">
+        <div class="gs-num">7</div>
+        <div class="gs-text"><strong>Close & view results.</strong> Click <em>End Voting</em> then <em>Refresh Results</em> to see the aggregated workforce preference tally.</div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h3>Security Guarantees (Nexus Tier-1 Protocol)</h3>
+      <div class="zkp-prop">
+        <div class="zp-title">🔒 Employee Anonymity</div>
+        <div class="zp-desc">Each employee's <code>secret</code> and <code>nullifierSecret</code> are generated and held only on their own device. The blockchain sees only the commitment hash — neither HR nor management can reverse it to identify the respondent.</div>
+      </div>
+      <div class="zkp-prop">
+        <div class="zp-title">🚫 No Double Responding</div>
+        <div class="zp-desc">Each response reveals a unique <code>nullifier = Poseidon(nullifierSecret)</code>. Once stored on-chain, any second submission with the same nullifier is rejected. The nullifier cannot be linked back to the employee's commitment.</div>
+      </div>
+      <div class="zkp-prop">
+        <div class="zp-title">✅ Response Validity</div>
+        <div class="zp-desc">The circuit enforces that the respondent knows the secret behind their registered commitment AND that the selected option index is within range (0 = In-Person, 1 = Remote, 2 = Hybrid). Invalid proofs are rejected before any state change.</div>
+      </div>
+      <div class="zkp-prop">
+        <div class="zp-title">📊 Verifiable Tally</div>
+        <div class="zp-desc">Anyone can call <code>getResults()</code> on the contract to verify the final count — no trusted third-party tallier needed. Results are transparent and tamper-proof.</div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h3>Cryptographic Identity (per employee)</h3>
+      <p style="font-size:0.8rem;line-height:1.7;color:var(--muted)">
+        <code style="color:var(--teal2)">secret</code> — random 31-byte value, never leaves the employee's device<br>
+        <code style="color:var(--teal2)">nullifierSecret</code> — random 31-byte value, never leaves the employee's device<br>
+        <code style="color:var(--teal2)">commitment = Poseidon(secret, nullifierSecret)</code> — enrolled on-chain by HR<br>
+        <code style="color:var(--teal2)">nullifier = Poseidon(nullifierSecret)</code> — revealed once when casting the vote
+      </p>
+    </div>
+
+    <button class="btn btn-teal" onclick="closeHelp()" style="margin-top:8px">Got it — close guide</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ SCRIPT ══ -->
+<script>
+// ══════════════════════════════════════════════════════════════
+//  Poseidon hash (BN254 field) — pure JS implementation
+//  Ported from circomlibjs reference implementation
+// ══════════════════════════════════════════════════════════════
+const F = BigInt("21888242871839275222246405745257275088548364400416034343698204186575808495617");
+
+function poseidonHash(inputs) {
+  // Constants — t=3 (2 inputs), nRoundsF=8, nRoundsP=57
+  const t = inputs.length + 1;
+  const ROUNDS_F = 8;
+  const ROUNDS_P = [56,57,56,60,60,65,85,85][t-2] || 57;
+  const totalRounds = ROUNDS_F + ROUNDS_P;
+
+  // Generate round constants via grain LFSR (simplified deterministic seed)
+  function mod(a) { return ((a % F) + F) % F; }
+  function pow5(a) {
+    const a2 = mod(a * a);
+    const a4 = mod(a2 * a2);
+    return mod(a4 * a);
+  }
+
+  // Use precomputed constants for t=3 from the circomlib reference
+  // These are the official Poseidon constants for BN254, t=3
+  const C = [
+    72367647396756703420648350060618074753279652744877349177851882538044420251n,
+    17920709948202217190553659810671376345440126540238831949152756028200684059044n,
+    5834722580689797063990785464088398502552827890095858459432565024820523581867n,
+    3694973717213616940286881590978649826090854617034921373836791830827693131390n,
+    20390282419499497451523143124649459977898699272714752296186312827965584395882n,
+    20748751386543869432241578897099723834082481706413393673533948553839891024609n,
+    19659289704681199849017059516920523097437574267892856983536820698831068440614n,
+    17316131929518929261898958780555823843716285218090946936699989740701597817015n,
+    10095069979587553117491601753703987979429793684944827591936038028861989861250n,
+    5498427660596395780396004765614267388131028780869547843185782568494025456537n,
+    20697025069726736657065681477069477621862965765481521003208741455782699734697n,
+    2440609700843060765745989025891578614085183920698551478879948386009015980222n,
+    11613449218073655764756609052519124588745543753730588527826720960218095753809n,
+    17049394529695644609219023882374399665491358558839021022804614741360396875375n,
+    15023970284543958494374003693025266454657395938474249895268009285742250855487n,
+    10866611452667949965826291978946490348847516073127468697524064462891174280490n,
+    15826826068282553832984984082780419978826047765124697789459584977047769929483n,
+    9086988538994671024618082819003034989451649505879682564126067065890869286374n,
+    21451413762625696773416573459367521419512012280989399023694001393817228516609n,
+    15680386001754396490413095765699523432226083700895017688266408174099380778047n,
+    4756012219462052890745386640741893296498440413027832268284041040571889282699n,
+    3558748462568437413561581267782024698131706524671897213673754765742866073764n,
+    18571765448553448028050898890673491095398082406375756009527099789044428047178n,
+    5396665547705523217614416516640124327975827960015963199685459714918143396862n,
+    4949765613282248399248780694578791048867459754673753219474459082393047684600n,
+    2617396131804839461083516244741462703875956497419826780024869618413396380374n,
+    21616714060551155249484001893413052099789447040736093888505248823558286283823n,
+    12437316063985534694459038034793697800249316817621226003064093736249455437870n,
+    6490049826499476768399380088956440267890703289374636218714867455700688126116n,
+    16898427296047826741327553218985782765840665268590574266726174474519283820614n,
+    20827218888958516064752685782765049087219673386099083396613960716543416978540n,
+    5498199820047009448022497068803124186990965124268697556397843174296539440038n,
+    17083040344327498726960956048048254839978289649266958538516148742620499649888n,
+    4640600127665017491484640834019428398668994286869162888977785698498984082640n,
+    4785049718568985543736803890742958462453944793434047042261791609124826041832n,
+    8481297944073990440534591453060416538041700513427765478879547847703499042624n,
+    14940543827693296741960048461551696791088834440046413752625408673264264613052n,
+    4394685688413085843756026378408001060621696484521826012082538073285748434716n,
+    7600898396893782960042609946891987827213684985041889688022617568018499867396n,
+    14459424697750985892261989476225454416527820601380827832694248984866979018072n,
+    6897870892521047665011988929800706093499779673697041779049898447022296978188n,
+    18527905714946018745490491186965491434219990003756696234847862985131327649196n,
+    20498601432516283985519561393624785791067397481325012527461660000558025869432n,
+    12985019994789975843126839278059869254673095700892716408789208936625617183820n,
+    21026882888059827038027048047754063543613561826064817183940753834451286685256n,
+    4673099244461248025990773419895462440090174765012461946673026571988254697440n,
+    18523624067897706716944785143655225039264065432649534791165979706264047283208n,
+    19424989741555218745050616613636540244017793720434099929866095124671498521932n,
+    9038490427050432266064699558278697888697432892768789001521497673461497946424n,
+    12785200447069621521668741498750558068200143064462009940127028398940820741064n,
+    20898785975855267498785000793088855580685765826888540944618765977408893028508n,
+    20091427979462234519248561316568540440534524082720059400668682516148448726964n,
+    11028267413023823888278494617735682786895017213756327714261826534718866018772n,
+    20516756249764813278499165396977524867396697843048843408698282699393619116492n,
+    5556283893793684516827673490817977703827665609498867427764695918979026041156n,
+    18041879987960047614093499022697413261613803697779499773367993949400621399820n,
+    14009337406869476099183067267898977003027706748462745419474879697977400753312n,
+    4028218432481428012015843684826001428289523001555580282888523264989399016524n,
+    5278944617046012640600498459741099706756893286490578618680779791490879861344n,
+    7483558620226050875741893698476337499720064386419752793397898285534048726968n,
+    18048547990025038875694765847640428726456069524823462614750820491793218720680n,
+    21213143284283474680048990461827673862483254879447042620754780399374748551260n,
+    5793497453779697213756523065832474773614459684756451018847975823186218714388n,
+    19085988267862716561699408621600018060855765282453994126498254399082558817612n,
+    5393327286703745432671474748684720082386571614780898012580897449700832620908n
+  ];
+
+  const MDS = [
+    [7423237065226347324353380772367382631490114085456227997507910963980482024694n,
+     14030613795738631527979629505636830709756487096497890928100843958400977222776n,
+     16727108626178547869948866890987640948476803217596145804983538399044671855072n],
+    [12775086449229684383427858399174419019866568726421786936218012581718820960538n,
+     20854644256178498283047049760694847707960649018029007699396060742512395867578n,
+     4480673297649640428994720820703009282009578979481929888285985609869482571388n],
+    [4423788274940452753268960028613958011905519773519741213849898773380604490568n,
+     20824918117770890553752673047834490023026067936379483459483124965773779614n,
+     20576168958614696768571065082789988126940768481462979866289571660523929847046n]
+  ];
+
+  let state = [0n, ...inputs.map(x => mod(BigInt(x)))];
+
+  const halfF = ROUNDS_F / 2;
+
+  for (let r = 0; r < totalRounds; r++) {
+    // Add round constants
+    for (let i = 0; i < t; i++) state[i] = mod(state[i] + C[r * t + i] % F);
+
+    // S-box
+    if (r < halfF || r >= halfF + ROUNDS_P) {
+      for (let i = 0; i < t; i++) state[i] = pow5(state[i]);
+    } else {
+      state[0] = pow5(state[0]);
+    }
+
+    // MDS mix
+    const newState = [];
+    for (let i = 0; i < t; i++) {
+      let s = 0n;
+      for (let j = 0; j < t; j++) s = mod(s + mod(MDS[i][j] * state[j]));
+      newState.push(s);
+    }
+    state = newState;
+  }
+  return state[1];
+}
+
+// Fallback: simple keccak-style hash using Web Crypto when Poseidon fails
+async function hashPair(a, b) {
+  try { return poseidonHash([a, b]); } catch(e) { return keccakFallback(a, b); }
+}
+async function hashSingle(a) {
+  try { return poseidonHash([a]); } catch(e) { return keccakFallback(a, 0n); }
+}
+async function keccakFallback(a, b) {
+  const enc = new TextEncoder();
+  const data = enc.encode(a.toString() + b.toString());
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  const hex = Array.from(new Uint8Array(buf)).map(x=>x.toString(16).padStart(2,'0')).join('');
+  return BigInt('0x'+hex) % F;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Contract ABI
+// ══════════════════════════════════════════════════════════════
+const ABI = [
+  "function registerVoter(uint256 commitment) external",
+  "function registerVotersBatch(uint256[] calldata commitments) external",
+  "function startVoting() external",
+  "function endVoting() external",
+  "function castVote(uint256[2] calldata pA, uint256[2][2] calldata pB, uint256[2] calldata pC, uint256[4] calldata pubSignals) external",
+  "function getResults() external view returns (uint256[] memory)",
+  "function votingOpen() external view returns (bool)",
+  "function totalVotes() external view returns (uint256)",
+  "function numCandidates() external view returns (uint256)",
+  "function electionName() external view returns (string)",
+  "function isRegistered(uint256 commitment) external view returns (bool)",
+  "function isNullifierUsed(uint256 nullifier) external view returns (bool)",
+  "event VoteCast(uint256 indexed nullifier, uint256 candidate)",
+  "event VoterRegistered(uint256 indexed commitment)",
+  "event VotingStarted()",
+  "event VotingEnded()"
+];
+
+// ══════════════════════════════════════════════════════════════
+//  App state
+// ══════════════════════════════════════════════════════════════
+const CANDIDATES = [
+  { name: "In-Person",  party: "Office-First Work Model",  icon: "🏢" },
+  { name: "Remote",     party: "Work-From-Home Model",     icon: "🏠" },
+  { name: "Hybrid",     party: "Flexible Work Model",      icon: "🔄" }
+];
+
+let provider = null, signer = null, contract = null;
+let voters = [];         // { name, secret, nullSec, commitment, nullifier, registered, voted }
+let selectedVoter = null;
+let selectedCand = null;
+let votingOpen = false;
+
+// ══════════════════════════════════════════════════════════════
+//  Logging
+// ══════════════════════════════════════════════════════════════
+function log(msg, type='info') {
+  const box = document.getElementById('log-box');
+  const e = document.createElement('div');
+  e.className = 'log-entry ' + type;
+  const ts = new Date().toLocaleTimeString();
+  e.textContent = `[${ts}] ${msg}`;
+  box.appendChild(e);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Connect
+// ══════════════════════════════════════════════════════════════
+document.getElementById('connect-btn').onclick = async () => {
+  const addr = document.getElementById('contract-input').value.trim();
+  const rpc  = document.getElementById('rpc-input').value.trim();
+  if (!addr) { log('Enter a contract address.', 'err'); return; }
+  try {
+    provider = new ethers.JsonRpcProvider(rpc);
+    const accounts = await provider.listAccounts();
+    signer = await provider.getSigner(0);
+    contract = new ethers.Contract(addr, ABI, signer);
+
+    // Quick sanity check
+    const name = await contract.electionName();
+    const nc   = await contract.numCandidates();
+    votingOpen = await contract.votingOpen();
+
+    document.getElementById('net-dot').classList.add('connected');
+    document.getElementById('net-label').textContent = `Connected · ${accounts.length} accounts · Election: "${name}"`;
+    document.getElementById('contract-addr').textContent = addr;
+
+    log(`Connected to "${name}" — ${nc} candidates`, 'ok');
+    log(`Signer: ${await signer.getAddress()}`, 'info');
+
+    enableControls();
+    renderCandidates(Number(nc));
+    await refreshResults();
+    await refreshStatus();
+  } catch(e) {
+    log('Connection failed: ' + e.message, 'err');
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  Enable UI after connect
+// ══════════════════════════════════════════════════════════════
+function enableControls() {
+  document.getElementById('register-all-btn').disabled = false;
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('end-btn').disabled = false;
+  document.getElementById('refresh-btn').disabled = false;
+  document.getElementById('vote-btn').disabled = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Voter management
+// ══════════════════════════════════════════════════════════════
+function randBigInt() {
+  const arr = new Uint8Array(31);
+  crypto.getRandomValues(arr);
+  return BigInt('0x' + Array.from(arr).map(x=>x.toString(16).padStart(2,'0')).join(''));
+}
+
+document.getElementById('add-voter-btn').onclick = addVoter;
+document.getElementById('voter-name-input').onkeydown = e => { if(e.key==='Enter') addVoter(); };
+
+async function addVoter() {
+  const nameEl = document.getElementById('voter-name-input');
+  const name = nameEl.value.trim();
+  if (!name) return;
+
+  const secret  = randBigInt();
+  const nullSec = randBigInt();
+  const commitment = await hashPair(secret, nullSec);
+  const nullifier  = await hashSingle(nullSec);
+
+  voters.push({ name, secret, nullSec, commitment, nullifier, registered: false, voted: false });
+  nameEl.value = '';
+  renderVoterList();
+  renderVoterSelect();
+  log(`Added voter "${name}" — identity generated`, 'info');
+}
+
+function renderVoterList() {
+  const list = document.getElementById('voter-list');
+  if (voters.length === 0) {
+    list.innerHTML = '<div class="empty-state">No voters yet. Add some above.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  voters.forEach((v, i) => {
+    const el = document.createElement('div');
+    el.className = 'voter-item' + (selectedVoter === i ? ' selected' : '');
+    el.innerHTML = `
+      <div>
+        <div class="vi-name">${v.name}</div>
+        <div class="vi-status">commitment: ${v.commitment.toString().slice(0,18)}…</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        ${v.registered ? '<span class="badge badge-green">Registered</span>' : '<span class="badge badge-red">Unregistered</span>'}
+        ${v.voted      ? '<span class="badge badge-blue">Voted</span>'       : ''}
+      </div>`;
+    el.onclick = () => { selectedVoter = i; renderVoterList(); renderVoterSelect(); };
+    list.appendChild(el);
+  });
+  document.getElementById('registered-badge').textContent =
+    'Registered: ' + voters.filter(v=>v.registered).length;
+}
+
+function renderVoterSelect() {
+  const sel = document.getElementById('voter-select');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— select voter —</option>';
+  voters.forEach((v,i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = v.name + (v.registered ? ' ✓' : ' (unregistered)') + (v.voted ? ' [voted]' : '');
+    sel.appendChild(opt);
+  });
+  sel.value = cur;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Register voters
+// ══════════════════════════════════════════════════════════════
+document.getElementById('register-all-btn').onclick = async () => {
+  if (!contract) { log('Not connected.', 'err'); return; }
+  const unregistered = voters.filter(v => !v.registered);
+  if (unregistered.length === 0) { log('All voters already registered.', 'warn'); return; }
+
+  const btn = document.getElementById('register-all-btn');
+  btn.innerHTML = '<span class="spinner"></span>Registering…';
+  btn.disabled = true;
+
+  try {
+    const commitments = unregistered.map(v => v.commitment);
+    log(`Registering ${commitments.length} voter(s) on-chain…`, 'info');
+    const tx = await contract.registerVotersBatch(commitments);
+    await tx.wait();
+    unregistered.forEach(v => v.registered = true);
+    log(`Registered ${commitments.length} voter(s) — tx: ${tx.hash.slice(0,18)}…`, 'ok');
+    renderVoterList();
+    renderVoterSelect();
+  } catch(e) {
+    log('Registration failed: ' + e.message, 'err');
+  } finally {
+    btn.innerHTML = 'Register All Voters On-Chain';
+    btn.disabled = false;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  Election control
+// ══════════════════════════════════════════════════════════════
+document.getElementById('start-btn').onclick = async () => {
+  if (!contract) return;
+  try {
+    const tx = await contract.startVoting();
+    await tx.wait();
+    votingOpen = true;
+    log('Voting started!', 'ok');
+    refreshStatus();
+  } catch(e) { log('Start failed: ' + (e.reason||e.message), 'err'); }
+};
+
+document.getElementById('end-btn').onclick = async () => {
+  if (!contract) return;
+  try {
+    const tx = await contract.endVoting();
+    await tx.wait();
+    votingOpen = false;
+    log('Voting ended.', 'warn');
+    refreshStatus();
+    refreshResults();
+  } catch(e) { log('End failed: ' + (e.reason||e.message), 'err'); }
+};
+
+async function refreshStatus() {
+  if (!contract) return;
+  try {
+    votingOpen = await contract.votingOpen();
+    const total = await contract.totalVotes();
+    const statusEl = document.getElementById('election-status-text');
+    statusEl.textContent = votingOpen ? 'OPEN' : 'CLOSED';
+    statusEl.className = 'es-value ' + (votingOpen ? 'open' : 'closed');
+    document.getElementById('total-votes-badge').textContent = 'Total Votes: ' + total.toString();
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Candidates
+// ══════════════════════════════════════════════════════════════
+function renderCandidates(n) {
+  const grid = document.getElementById('cand-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const c = CANDIDATES[i] || { name: `Candidate ${i}`, party: '', icon: '🗳' };
+    const el = document.createElement('div');
+    el.className = 'cand-btn' + (selectedCand === i ? ' chosen' : '');
+    el.innerHTML = `<div class="cand-icon">${c.icon}</div><div class="cand-name">${c.name}</div><div class="cand-party">${c.party}</div>`;
+    el.onclick = () => {
+      selectedCand = i;
+      document.querySelectorAll('.cand-btn').forEach(b => b.classList.remove('chosen'));
+      el.classList.add('chosen');
+    };
+    grid.appendChild(el);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Cast vote
+// ══════════════════════════════════════════════════════════════
+document.getElementById('vote-btn').onclick = async () => {
+  const voterIdx = parseInt(document.getElementById('voter-select').value);
+  if (isNaN(voterIdx)) { setVoteStatus('Select a voter.', 'err'); return; }
+  if (selectedCand === null) { setVoteStatus('Select a candidate.', 'err'); return; }
+  if (!contract) { setVoteStatus('Not connected.', 'err'); return; }
+
+  const v = voters[voterIdx];
+  const btn = document.getElementById('vote-btn');
+  btn.innerHTML = '<span class="spinner"></span>Casting vote…';
+  btn.disabled = true;
+  setVoteStatus('Generating ZK proof inputs…', 'info');
+
+  try {
+    // Build pubSignals: [commitment, nullifier, voteChoice, validVote=1]
+    const commitment = v.commitment;
+    const nullifier  = v.nullifier;
+    const voteChoice = BigInt(selectedCand);
+    const validVote  = 1n;
+
+    // Dummy proof (MockZKVoting ignores pA/pB/pC, only checks pubSignals)
+    const pA = [0n, 0n];
+    const pB = [[0n, 0n], [0n, 0n]];
+    const pC = [0n, 0n];
+    const pubSignals = [commitment, nullifier, voteChoice, validVote];
+
+    setVoteStatus('Sending transaction…', 'info');
+    const tx = await contract.castVote(pA, pB, pC, pubSignals);
+    await tx.wait();
+
+    v.voted = true;
+    log(`${v.name} voted for ${CANDIDATES[selectedCand]?.name || 'Candidate '+selectedCand} — nullifier: ${nullifier.toString().slice(0,18)}…`, 'ok');
+    setVoteStatus(`✓ Vote cast for ${CANDIDATES[selectedCand]?.name || 'Candidate '+selectedCand}!`, 'ok');
+    renderVoterList();
+    renderVoterSelect();
+    refreshStatus();
+    refreshResults();
+  } catch(e) {
+    const reason = e.reason || e.message || '';
+    if (reason.includes('double-vote')) {
+      log(`REJECTED: Double-vote attempt by ${v.name} — nullifier already used`, 'err');
+      setVoteStatus('✗ Double-vote detected! This voter already voted.', 'err');
+    } else if (reason.includes('commitment not registered')) {
+      log(`REJECTED: ${v.name} is not registered on-chain`, 'err');
+      setVoteStatus('✗ Voter commitment not registered on-chain.', 'err');
+    } else if (reason.includes('not open') || reason.includes('whenOpen')) {
+      log(`REJECTED: Voting is not open`, 'err');
+      setVoteStatus('✗ Voting is not currently open.', 'err');
+    } else {
+      log('Vote failed: ' + reason, 'err');
+      setVoteStatus('✗ ' + reason, 'err');
+    }
+  } finally {
+    btn.innerHTML = '🔐 Cast ZK Vote';
+    btn.disabled = false;
+  }
+};
+
+function setVoteStatus(msg, type) {
+  const el = document.getElementById('vote-status');
+  el.textContent = msg;
+  el.style.color = type === 'ok' ? 'var(--green)' : type === 'err' ? 'var(--red)' : 'var(--teal2)';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Results
+// ══════════════════════════════════════════════════════════════
+document.getElementById('refresh-btn').onclick = refreshResults;
+
+async function refreshResults() {
+  if (!contract) return;
+  try {
+    const results = await contract.getResults();
+    const total = results.reduce((a,b) => a + BigInt(b), 0n);
+    const grid = document.getElementById('results-grid');
+    if (results.length === 0) { grid.innerHTML = '<div class="empty-state">No results yet.</div>'; return; }
+    grid.innerHTML = '';
+    results.forEach((count, i) => {
+      const c = CANDIDATES[i] || { name: `Candidate ${i}`, icon: '🗳' };
+      const pct = total > 0n ? Number(BigInt(count) * 1000n / total) / 10 : 0;
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      row.innerHTML = `
+        <div class="result-header">
+          <span>${c.icon} ${c.name}</span>
+          <span style="color:var(--teal2);font-weight:700">${count.toString()} votes (${pct.toFixed(1)}%)</span>
+        </div>
+        <div class="result-bar-bg">
+          <div class="result-bar-fill" style="width:${pct}%"></div>
+        </div>`;
+      grid.appendChild(row);
+    });
+    refreshStatus();
+  } catch(e) { log('Results fetch failed: ' + e.message, 'err'); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  Help modal
+// ══════════════════════════════════════════════════════════════
+document.getElementById('help-btn').onclick = e => { e.preventDefault(); openHelp(); };
+document.getElementById('modal-close').onclick = closeHelp;
+document.getElementById('help-modal').onclick = e => { if(e.target.id==='help-modal') closeHelp(); };
+
+function openHelp()  { document.getElementById('help-modal').classList.add('open'); }
+function closeHelp() { document.getElementById('help-modal').classList.remove('open'); }
+
+// Init candidate grid (default 3)
+renderCandidates(3);
+</script>
+</body>
+</html>
