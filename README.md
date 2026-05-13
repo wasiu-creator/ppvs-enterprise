@@ -1,5 +1,5 @@
 # 🗳 PPVS — Privacy-Preserving Voting System
-### Nexus Global · Enterprise Edition · Zero-Knowledge Proofs
+### Global Enterprise · Zero-Knowledge Proofs
 
 > **The corporate privacy guarantee:** employees prove they are enrolled and have not yet responded — without revealing *who they are* or *which option they chose*. Enforced by cryptography, not policy.
 
@@ -93,7 +93,7 @@ You will see the **PPVS Enterprise** dashboard.
 
 2. Paste the contract address and click **Connect**.
 
-3. The status bar at the top turns green: **"Connected · 20 accounts · Election: Nexus Global..."**
+3. The status bar at the top turns green: **"Connected · 20 accounts · Election: Global Ent."**
 
 ---
 
@@ -172,7 +172,7 @@ docker-compose down
 | 1 | 🏠 Remote | Work-from-home model |
 | 2 | 🔄 Hybrid | Flexible / mixed model |
 
-### Security Properties (Nexus Tier-1 Protocol)
+### Security Properties (Tier-1 Protocol)
 
 | Property | How it's enforced |
 |---|---|
@@ -368,4 +368,4 @@ function isRegistered(uint256 commitment) external view returns (bool);
 
 ---
 
-*Nexus Global Enterprises · PPVS Enterprise Edition · COSC 896 — Blockchain Systems · BSU · Spring 2026*
+*Global Enterprises · PPVS Enterprise Edition · COSC 896 — Blockchain Systems · BSU · Spring 2026*
