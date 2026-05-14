@@ -27,7 +27,7 @@ Install Docker Desktop and make sure it is **running** (you will see the whale i
 
 **Option A — Clone from GitHub (recommended)**
 ```bash
-git clone https://github.com/lexico1807/ppvs-enterprise.git
+git clone https://github.com/wasiu-creator/ppvs-enterprise.git
 cd ppvs-enterprise
 ```
 
